@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Kanban</title>
+        <style>
+            .drop-zone {
+                top: 256px;
+                width: 1024px;
+                height: 256px;
+                border: 8px dashed #ccc;
+                text-align: center;
+                margin: 0px;
+                position: relative;
+                user-select: none;
+                -moz-user-select: none;
+                -webkit-user-select: none;
+                -ms-user-select: none;
+            }
+
+            .draggable {
+                width: 128px;
+                height: 128px;
+                padding: 32px;
+                margin: 0px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                background-color: #f1f1f1;
+                border: 1px dashed #ccc;
+                position: absolute;
+            }
+        </style>
+        <script>
+            var mouse_x = 0;
+            var mouse_y = 0;
+            var box_x = 0;
+            var box_y = 0;
+
+            var count = 0;
+            var box_id = [];
+            var box_name = [];
+            var box_x = [];
+            var box_y = [];
+            var box_status = [];
+            var combinedArray = box_id.map(function(value, index) {
+                return [value, box_name[index], box_x[index], box_y[index], box_status[index]];
+            });
+            var box_count = 0;
+
+            var before_parent = "";
+            var after_parent = "";
+
+            function loadBox() {
+                for (var i = 0; i < box_id.length; i++) {
+                    var container = document.getElementById(box_status[i]);
+                    var draggableElement = document.createElement('div');
+                    draggableElement.className = 'draggable';
+                    draggableElement.draggable = true;
+                    draggableElement.setAttribute('ondragstart', 'drag(event)');
+                    draggableElement.setAttribute('contenteditable', 'true');
+                    draggableElement.id = box_id[i];
+                    draggableElement.style.left = box_x[i];
+                    draggableElement.style.top = box_y[i];
+                    draggableElement.textContent = box_name[i];
+                    container.appendChild(draggableElement);
+                    box_count++;
+                }
+
+                var currentDate = new Date();
+                var year = currentDate.getFullYear();
+                var month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+                var day = currentDate.getDate().toString().padStart(2, '0');
+                var hours = currentDate.getHours().toString().padStart(2, '0');
+                var minutes = currentDate.getMinutes().toString().padStart(2, '0');
+                var seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+                var formattedDateTime = year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+                document.getElementById("log").textContent += formattedDateTime + " " + "start\n";
+            }
+
+            window.addEventListener("DOMContentLoaded", loadBox);
+
+            function getActiveElementId() {
+                var activeElement = document.activeElement;
+                var activeElementId = activeElement.id;
+            }
+
+            var intervalId = setInterval(getActiveElementId, 1000);
+
+            function allowDrop(event) {
+                event.preventDefault();
+            }
+
+            function drag(event) {
+                event.dataTransfer.setData("text", event.target.id);
+                mouse_x = event.clientX;
+                mouse_y = event.clientY;
+                box_x = event.target.getBoundingClientRect().left;
+                box_y = event.target.getBoundingClientRect().top;
+                before_parent = event.target.parentNode.id;
+            }
+
+            function drop(event, element) {
+                event.preventDefault();
+
+                var data = event.dataTransfer.getData("text");
+                var draggableElement = document.getElementById(data);
+                var styles = window.getComputedStyle(element);
+                var borderSize = styles.getPropertyValue("border-width");
+                var numberPart = parseFloat(borderSize);
+
+                var element_x = element.getBoundingClientRect().left;
+                var element_y = element.getBoundingClientRect().top;
+
+                after_parent = element.id;
+
+                draggableElement.style.left = event.clientX -element.getBoundingClientRect().left - numberPart - (mouse_x - box_x) + "px";
+                draggableElement.style.top = event.clientY -element.getBoundingClientRect().top - numberPart - (mouse_y - box_y) + "px";
+
+                element.appendChild(draggableElement);
+                if (after_parent === "archive") {
+                    draggableElement.remove();
+                }
+
+                if (before_parent != after_parent) {
+                    var currentDate = new Date();
+                    var year = currentDate.getFullYear();
+                    var month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+                    var day = currentDate.getDate().toString().padStart(2, '0');
+                    var hours = currentDate.getHours().toString().padStart(2, '0');
+                    var minutes = currentDate.getMinutes().toString().padStart(2, '0');
+                    var seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+                    var formattedDateTime = year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+                    document.getElementById("log").textContent += formattedDateTime + " " + "move" + draggableElement.textContent + " " + after_parent + "\n";
+                }
+                before_parent = "";
+                after_parent = "";
+            }
+
+            function addElement() {
+                var container = document.getElementById('container');
+                var draggableElement = document.createElement('div');
+                draggableElement.className = 'draggable';
+                draggableElement.draggable = true;
+                draggableElement.setAttribute('ondragstart', 'drag(event)');
+                draggableElement.setAttribute('contenteditable', 'true');
+                draggableElement.innerHTML = 'draggableElement' + (box_count);
+                draggableElement.id = 'draggableElement' + (box_count);
+                container.appendChild(draggableElement);
+                box_count++;
+
+                var currentDate = new Date();
+                var year = currentDate.getFullYear();
+                var month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+                var day = currentDate.getDate().toString().padStart(2, '0');
+                var hours = currentDate.getHours().toString().padStart(2, '0');
+                var minutes = currentDate.getMinutes().toString().padStart(2, '0');
+                var seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+                var formattedDateTime = year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+                document.getElementById("log").textContent += formattedDateTime + " " + "create " + draggableElement.textContent + "\n";
+            }
+
+            document.addEventListener('focusin', function(event) {
+                before_name = event.target.textContent;
+            });
+
+            document.addEventListener('focusout', function(event) {
+                after_name = event.target.textContent;
+
+                if (before_name != after_name) {
+                    var currentDate = new Date();
+                    var year = currentDate.getFullYear();
+                    var month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+                    var day = currentDate.getDate().toString().padStart(2, '0');
+                    var hours = currentDate.getHours().toString().padStart(2, '0');
+                    var minutes = currentDate.getMinutes().toString().padStart(2, '0');
+                    var seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+                    var formattedDateTime = year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+                    document.getElementById("log").textContent += formattedDateTime + " " + "rename " + before_name + " " + after_name + "\n";
+                }
+            });
+
+            window.onbeforeunload = function() {
+                box_id = [];
+                box_name = [];
+                box_x = [];
+                box_y = [];
+                box_status = [];
+                var elements = document.querySelectorAll('.draggable');
+                for (var i = 0; i < elements.length; i++) {
+                    var element = elements[i];
+                    if (element.id.startsWith("draggableElement")) {
+                        box_id.push(elmeent.textContent);
+                        box_name.push(element.textContent);
+                        box_x.push(element.style.left);
+                        box_y.push(element.styl.top);
+                        box_status.push(element.id);
+                    }
+                }
+
+                var currentDate = new Date();
+                var year = currentDate.getFullYear();
+                var month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+                var day = currentDate.getDate().toString().padStart(2, '0');
+                var hours = currentDate.getHours().toString().padStart(2, '0');
+                var minutes = currentDate.getMinutes().toString().padStart(2, '0');
+                var seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+                var formattedDateTime = year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+                var input = document.getElementById("log").textContent;
+                var lines = input.split("\n");
+                var filteredLines = lines.filter(line => line.includes("rename") || line.endsWith("end"));
+                var output = filteredLines.join("\n");
+                document.getElementById("log").textContent = output;
+                document.getElementById("log").textContent += formattedDateTime + " " + "end\n";
+                return "本当に閉じますか？";
+            }
+
+        </script>
+    </head>
+    <body>
+        <div id="container"></div>
+        <button onclick="addElement()">add</button>
+
+        <div id="stay" class="drop-zone" ondrop="drop(event, this)" ondragover="allowDrop(event)">
+            stay
+        </div>
+
+        <div id="active" class="drop-zone" ondrop="drop(event, this)" ondragover="allowDrop(event)">
+            active
+        </div>
+
+        <div id="complete" class="drop-zone" ondrop="drop(event, this)" ondragover="allowDrop(event)">
+            complete
+        </div>
+
+        <div id="archive" class="drop-zone" style="left: 512px; width: 512px;" ondrop="drop(event, this)" ondragover="allowDrop(event)">
+            archive
+        </div>
+
+        <textarea id="log" cols="64" rows="16"></textarea>
+    </body>
+</html>
